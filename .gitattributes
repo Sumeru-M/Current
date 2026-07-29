@@ -1,0 +1,40 @@
+# Git LFS
+#
+# Nothing in the repo needs LFS today — the only binaries are SVGs and a
+# favicon, all a few KB. These patterns exist ahead of the storage layer for
+# Instants: venue photos and 10-second clips are exactly the payload that turns
+# a git history into a multi-gigabyte clone if committed inline.
+#
+# Anyone cloning this repo needs git-lfs installed (`brew install git-lfs`,
+# then `git lfs install`) before these file types resolve to real content.
+
+# Video — instant clips, marketing captures
+*.mp4  filter=lfs diff=lfs merge=lfs -text
+*.mov  filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+*.m4v  filter=lfs diff=lfs merge=lfs -text
+
+# Raster media — venue photography, instant stills, OG images
+*.png  filter=lfs diff=lfs merge=lfs -text
+*.jpg  filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.gif  filter=lfs diff=lfs merge=lfs -text
+*.webp filter=lfs diff=lfs merge=lfs -text
+*.avif filter=lfs diff=lfs merge=lfs -text
+
+# Fonts shipped locally rather than via next/font
+*.woff  filter=lfs diff=lfs merge=lfs -text
+*.woff2 filter=lfs diff=lfs merge=lfs -text
+*.ttf   filter=lfs diff=lfs merge=lfs -text
+*.otf   filter=lfs diff=lfs merge=lfs -text
+
+# Design source files, if any ever land here
+*.fig    filter=lfs diff=lfs merge=lfs -text
+*.sketch filter=lfs diff=lfs merge=lfs -text
+
+# Deliberately NOT in LFS: SVG and ICO are text/tiny and diff usefully.
+
+# Normalise line endings so Windows contributors don't churn every file.
+* text=auto eol=lf
+*.png binary
+*.ico binary

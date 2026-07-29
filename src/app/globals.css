@@ -1,0 +1,230 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — the single source of truth for the visual language.
+ * Components must never hardcode a hex value. Every colour flows through a
+ * semantic token so a future vertical (or a white-labelled venue theme) can be
+ * retheming exercise, not a refactor.
+ */
+@theme {
+  /* Surfaces — dark-first, near-black with a cool undertone */
+  --color-canvas: #08080a;
+  --color-surface: #0e0e11;
+  --color-raised: #141418;
+  --color-overlay: #1a1a20;
+
+  /* Lines */
+  --color-line: #1e1e25;
+  --color-line-strong: #2f2f3a;
+
+  /* Content */
+  --color-ink: #f4f4f6;
+  --color-muted: #9a9aa6;
+  --color-subtle: #6b6b78;
+
+  /* Accent — one brand signal, used sparingly */
+  --color-accent: #7c5cff;
+  --color-accent-hover: #8f73ff;
+  --color-on-accent: #ffffff;
+  --color-accent-wash: #17122b;
+
+  /* Status */
+  --color-positive: #3ddc97;
+  --color-positive-wash: #0f2419;
+  --color-caution: #f5a524;
+  --color-caution-wash: #2a1f0c;
+  --color-critical: #ff5c5c;
+  --color-critical-wash: #2b1414;
+
+  /* Typography */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Radii */
+  --radius-card: 18px;
+  --radius-control: 10px;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Focus is a product surface, not an afterthought. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line-strong);
+    border-radius: 999px;
+    border: 3px solid var(--color-canvas);
+  }
+}
+
+@layer utilities {
+  /*
+   * Motion system — CSS, not JavaScript.
+   *
+   * Entrance animations are declared so the *resting* state is the visible one
+   * and the keyframes only describe where the element comes *from*. If an
+   * animation never runs — throttled tab, reduced-motion, a stalled JS
+   * frameloop, an old device — the content is still on screen. A JS animation
+   * library that freezes mid-tween leaves `opacity: 0` painted on your primary
+   * content, which is a correctness bug wearing a design costume.
+   *
+   * Stagger via `style={{ animationDelay }}`, capped at ~300ms.
+   */
+  @keyframes enter-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+  @keyframes enter-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes enter-scale {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+  }
+  @keyframes enter-sheet {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+
+  @keyframes enter-drawer {
+    from {
+      transform: translateX(-100%);
+    }
+  }
+
+  .animate-enter {
+    animation: enter-rise 0.42s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .animate-enter-drawer {
+    animation: enter-drawer 0.28s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .animate-enter-fade {
+    animation: enter-fade 0.24s ease-out backwards;
+  }
+  .animate-enter-scale {
+    animation: enter-scale 0.24s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .animate-enter-sheet {
+    animation: enter-sheet 0.28s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+
+  /* Height-auto expand without measuring anything in JS. */
+  .collapsible {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .collapsible[data-open="true"] {
+    grid-template-rows: 1fr;
+  }
+  .collapsible > * {
+    overflow: hidden;
+  }
+
+  /* Ambient light behind the AI surface. GPU-cheap, no image request. */
+  .bg-aurora {
+    background-image:
+      radial-gradient(
+        55rem 34rem at 50% -12%,
+        rgba(124, 92, 255, 0.18),
+        transparent 62%
+      ),
+      radial-gradient(
+        36rem 26rem at 88% 4%,
+        rgba(61, 220, 151, 0.05),
+        transparent 58%
+      );
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  .animate-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.04),
+      transparent
+    );
+    animation: shimmer 1.6s infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 currentColor;
+      opacity: 0.55;
+    }
+    70% {
+      box-shadow: 0 0 0 7px transparent;
+      opacity: 0;
+    }
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+      opacity: 0;
+    }
+  }
+  .animate-pulse-ring {
+    animation: pulse-ring 2.4s cubic-bezier(0.66, 0, 0, 1) infinite;
+  }
+}
+
+/* Motion preference is honoured globally, not per component. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
