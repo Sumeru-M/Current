@@ -46,9 +46,19 @@ export interface Recommendation {
   rank: number;
 }
 
+/**
+ * What the result set is answering.
+ *
+ * `open_now` is the default. `opening_later` means nothing is trading yet and
+ * we are answering the question the user actually has at 3pm — "where tonight?"
+ * — rather than returning an empty screen that reads as a broken product.
+ */
+export type RecommendationBasis = "open_now" | "opening_later";
+
 export interface RecommendationSet {
   id: string;
   intentId: string;
+  basis: RecommendationBasis;
   recommendations: Recommendation[];
   generatedAt: string;
   /** Venues considered before ranking — shown as "searched 47 venues". */

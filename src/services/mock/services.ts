@@ -18,6 +18,7 @@ import type {
   Offer,
   OperationalNudge,
   Recommendation,
+  RecommendationBasis,
   RecommendationSet,
   Venue,
   VerticalId,
@@ -26,6 +27,7 @@ import { APP } from "@/config/app";
 import { MOCK_BUSINESS } from "@/mocks/venues";
 import { latency, nowIso, uid } from "@/mocks/runtime";
 import { buildAnalytics, buildNudges } from "@/mocks/analytics";
+import { nextOpening } from "@/lib/hours";
 import { mockStore } from "./store";
 import { estimateTravel, explainMatch } from "./ranking";
 
@@ -114,15 +116,35 @@ export class MockRecommendationService implements RecommendationService {
           rank: 0,
         } satisfies Recommendation;
       })
-      .filter((rec) => rec.availability.isOpen)
-      .sort((a, b) => b.match.score - a.match.score)
+      .sort((a, b) => b.match.score - a.match.score);
+
+    /**
+     * Open venues win outright. But when nothing is trading — a search at 3pm,
+     * or a Monday when half the city is dark — returning an empty screen
+     * answers a question nobody asked. Someone searching in the afternoon is
+     * planning tonight, so we fall back to venues opening later and say so.
+     *
+     * The fallback is explicit in the payload (`basis`) rather than silently
+     * blended, so the UI can be honest about which question it answered. A
+     * closed venue never masquerades as an open one.
+     */
+    const openNow = scored.filter((rec) => rec.availability.isOpen);
+    const basis: RecommendationBasis = openNow.length ? "open_now" : "opening_later";
+
+    const pool =
+      basis === "open_now"
+        ? openNow
+        : scored.filter((rec) => nextOpening(rec.venue) !== null);
+
+    const ranked = pool
       .slice(0, limit ?? APP.maxRecommendations)
       .map((rec, index) => ({ ...rec, rank: index + 1 }));
 
     return {
       id: uid("recset"),
       intentId: intent.utterance,
-      recommendations: scored,
+      basis,
+      recommendations: ranked,
       generatedAt: nowIso(),
       consideredCount: candidates.length,
     };

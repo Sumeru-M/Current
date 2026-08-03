@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowRight, History } from "lucide-react";
+import { ArrowRight, History, SearchX } from "lucide-react";
 import { APP } from "@/config/app";
 import { getVertical, ACTIVE_VERTICAL } from "@/config/verticals";
 import { useIntentSession } from "@/stores/intent-session";
@@ -10,6 +10,8 @@ import { IntentChips } from "./intent-chips";
 import { Clarification } from "./clarification";
 import { RecommendationCard } from "@/features/recommendations/recommendation-card";
 import { RecommendationSkeletons } from "@/features/recommendations/recommendation-list";
+import { ResultBasisNote } from "@/features/recommendations/result-basis-note";
+import { EmptyState } from "@/components/ui/primitives";
 
 /**
  * IntentCanvas — the landing experience.
@@ -127,8 +129,15 @@ export function IntentCanvas() {
 
             {busy ? (
               <RecommendationSkeletons count={2} />
+            ) : !results || !results.recommendations.length ? (
+              <EmptyState
+                icon={<SearchX className="size-6" />}
+                title="Nothing matches that yet"
+                description="Every venue is either closed for the week or outside your constraints. Loosen the budget or the queue limit, or try a different night."
+              />
             ) : (
               <div className="space-y-3">
+                <ResultBasisNote results={results} />
                 {top.map((recommendation, index) => (
                   <RecommendationCard
                     key={recommendation.id}

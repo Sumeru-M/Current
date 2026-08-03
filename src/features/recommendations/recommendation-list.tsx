@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { useIntentSession } from "@/stores/intent-session";
 import { RecommendationCard } from "./recommendation-card";
+import { ResultBasisNote } from "./result-basis-note";
 
 /**
  * Owns every state a result set can be in: loading, error, empty, ready.
@@ -55,6 +56,7 @@ export function RecommendationList({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="space-y-3">
+      <ResultBasisNote results={results} />
       {results.recommendations.map((recommendation, index) => (
         <RecommendationCard
           key={recommendation.id}

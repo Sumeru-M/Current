@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bookmark, Car, Footprints, MapPin, Music2, Play } from "lucide-react";
+import {
+  Bookmark,
+  CalendarClock,
+  Car,
+  Footprints,
+  MapPin,
+  Music2,
+  Play,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   formatDistance,
@@ -27,6 +35,7 @@ import { useInstants } from "@/hooks/use-domain-queries";
 import { InstantViewer } from "@/features/venue/instant-viewer";
 import type { Recommendation } from "@/types";
 import { getVertical } from "@/config/verticals";
+import { nextOpening } from "@/lib/hours";
 
 /**
  * RecommendationCard
@@ -72,6 +81,12 @@ export function RecommendationCard({
   const toggle = useSavedStore((s) => s.toggle);
 
   const cardAttributes = vertical.attributes.filter((a) => a.surfaceOnCard);
+  /**
+   * A closed venue never shows live telemetry. "Busy · 6 min wait" for a room
+   * that doesn't open for another six hours is the single fastest way to lose
+   * a user's trust in the whole live layer.
+   */
+  const opening = availability.isOpen ? null : nextOpening(venue);
   const hero = venue.media[0];
   const TravelIcon = travel.mode === "walk" ? Footprints : Car;
 
@@ -136,10 +151,16 @@ export function RecommendationCard({
           <Badge tone="neutral" className="bg-black/50 backdrop-blur">
             #{rank}
           </Badge>
+          {/*
+            Labelled "Instant", not "Live now". The venue can be closed while a
+            still-unexpired instant is watchable, and two badges arguing about
+            whether the place is open is exactly the kind of detail that makes
+            a live product feel unreliable.
+          */}
           {hasInstant ? (
             <Badge tone="accent" className="bg-black/50 backdrop-blur">
               <span className="size-1.5 rounded-full bg-accent" />
-              Live now
+              Instant
             </Badge>
           ) : null}
         </div>
@@ -210,23 +231,44 @@ export function RecommendationCard({
 
         {/* Live strip — the row that makes this different from a listings app. */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[12px] border border-line bg-canvas/50 px-3 py-2.5">
-          {vertical.supportsQueue ? (
-            <QueueIndicator availability={availability} />
-          ) : null}
-          {vertical.supportsLiveOccupancy ? (
-            <CapacityBadge availability={availability} />
-          ) : null}
-          <div className="flex items-center gap-1.5 text-[13px] text-ink">
-            <TravelIcon className="size-3.5 text-subtle" aria-hidden />
-            {formatDuration(travel.minutes)}
-            <span className="text-subtle">
-              · {formatDistance(travel.distanceKm)}
-            </span>
-          </div>
-          <FreshnessChip
-            updatedAt={availability.updatedAt}
-            className="ml-auto"
-          />
+          {opening ? (
+            <>
+              <div className="flex items-center gap-1.5 text-[13px] text-ink">
+                <CalendarClock className="size-3.5 text-caution" aria-hidden />
+                {opening.label}
+              </div>
+              <div className="flex items-center gap-1.5 text-[13px] text-ink">
+                <TravelIcon className="size-3.5 text-subtle" aria-hidden />
+                {formatDuration(travel.minutes)}
+                <span className="text-subtle">
+                  · {formatDistance(travel.distanceKm)}
+                </span>
+              </div>
+              <Badge tone="neutral" className="ml-auto">
+                Closed now
+              </Badge>
+            </>
+          ) : (
+            <>
+              {vertical.supportsQueue ? (
+                <QueueIndicator availability={availability} />
+              ) : null}
+              {vertical.supportsLiveOccupancy ? (
+                <CapacityBadge availability={availability} />
+              ) : null}
+              <div className="flex items-center gap-1.5 text-[13px] text-ink">
+                <TravelIcon className="size-3.5 text-subtle" aria-hidden />
+                {formatDuration(travel.minutes)}
+                <span className="text-subtle">
+                  · {formatDistance(travel.distanceKm)}
+                </span>
+              </div>
+              <FreshnessChip
+                updatedAt={availability.updatedAt}
+                className="ml-auto"
+              />
+            </>
+          )}
         </div>
 
         <MatchBreakdown match={match} />
@@ -236,7 +278,9 @@ export function RecommendationCard({
             <p className="text-[13px] text-ink">
               {availability.entryFee
                 ? `${formatMoney(availability.entryFee)} cover`
-                : "No cover tonight"}
+                : opening
+                  ? "No cover listed"
+                  : "No cover tonight"}
             </p>
             {featuredOffer ? (
               <p className="truncate text-[12px] text-muted">

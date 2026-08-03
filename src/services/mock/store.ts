@@ -1,5 +1,6 @@
 import type { Availability, Instant, Offer, Venue } from "@/types";
 import { bandFromPct } from "@/config/occupancy";
+import { isOpenNow } from "@/lib/hours";
 import { MOCK_OFFERS, MOCK_VENUES } from "@/mocks/venues";
 import {
   createRng,
@@ -165,46 +166,6 @@ class MockStore {
     }
     this.emit();
   }
-}
-
-/**
- * Is the venue trading right now, per its own published hours?
- *
- * Handles the case that matters in nightlife and that naive implementations
- * always get wrong: a window that closes after midnight belongs to the
- * *previous* day. A room open 21:00–04:00 on Friday is still open at 2am on
- * Saturday morning.
- */
-function isOpenNow(venue: Venue, at: Date = new Date()): boolean {
-  const minutes = at.getHours() * 60 + at.getMinutes();
-  const toMinutes = (time: string) => {
-    const [h, m] = time.split(":").map(Number);
-    return h * 60 + m;
-  };
-
-  const windowsToCheck = [
-    {
-      window: venue.openingHours.find((w) => w.day === at.getDay()),
-      sameDay: true,
-    },
-    {
-      window: venue.openingHours.find((w) => w.day === (at.getDay() + 6) % 7),
-      sameDay: false,
-    },
-  ];
-
-  for (const { window, sameDay } of windowsToCheck) {
-    if (!window || window.closed) continue;
-    const opens = toMinutes(window.opensAt);
-    const closes = toMinutes(window.closesAt);
-    const crossesMidnight = closes <= opens;
-
-    if (sameDay && minutes >= opens && (crossesMidnight || minutes < closes))
-      return true;
-    // Yesterday's late window spilling into today.
-    if (!sameDay && crossesMidnight && minutes < closes) return true;
-  }
-  return false;
 }
 
 /**
