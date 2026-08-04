@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, History, SearchX } from "lucide-react";
 import { APP } from "@/config/app";
@@ -12,16 +13,21 @@ import { RecommendationCard } from "@/features/recommendations/recommendation-ca
 import { RecommendationSkeletons } from "@/features/recommendations/recommendation-list";
 import { ResultBasisNote } from "@/features/recommendations/result-basis-note";
 import { EmptyState } from "@/components/ui/primitives";
+import { VoiceCapture } from "@/features/voice/voice-capture";
+import { useSpeechSupported } from "@/features/voice/use-dictation";
 
 /**
  * IntentCanvas — the landing experience.
  *
- * Empty state is nearly nothing: a line of type, the composer, three seeded
- * prompts. No filters, no categories, no navigation chrome competing with the
- * input. Once a search resolves, the same surface transforms in place into
- * understanding → results, so the user never feels handed off to a "results
- * page". That continuity is what makes it read as a concierge rather than
- * a search engine.
+ * Voice first. The empty state is a microphone, a line of type, and three
+ * seeded prompts — no filters, no categories, no chrome competing with the
+ * input. On a phone outside a venue, speaking a request costs four seconds
+ * where typing it costs twenty.
+ *
+ * Typing is a peer, not a fallback: one tap away at all times, and the default
+ * (with no mic UI at all) wherever speech cannot run. Once a search resolves,
+ * this same surface becomes understanding → results, so the user is never
+ * handed off to a "results page".
  */
 export function IntentCanvas() {
   const router = useRouter();
@@ -35,6 +41,17 @@ export function IntentCanvas() {
   const hasSession = Boolean(turn);
   const busy = status === "interpreting" || status === "ranking";
   const top = results?.recommendations.slice(0, 3) ?? [];
+
+  /**
+   * Which input the landing screen leads with. Voice unless the device can't
+   * do it, in which case the composer is simply the whole interface — no
+   * disabled mic, no apology for a feature this browser was never offered.
+   */
+  const canSpeak = useSpeechSupported();
+  const [mode, setMode] = useState<"voice" | "type">(
+    canSpeak ? "voice" : "type",
+  );
+  const voiceLanding = mode === "voice" && !hasSession;
 
   return (
     <div className="relative min-h-dvh bg-aurora">
@@ -69,7 +86,14 @@ export function IntentCanvas() {
           </div>
         ) : null}
 
-        <IntentComposer autoFocus />
+        {voiceLanding ? (
+          <VoiceCapture
+            onSwitchToTyping={() => setMode("type")}
+            className="py-2"
+          />
+        ) : (
+          <IntentComposer autoFocus={!hasSession} />
+        )}
 
         {/* Empty-state seeds. Vertical-owned, so restaurants get their own. */}
         {!hasSession ? (

@@ -17,6 +17,18 @@ export const APP = {
   /** How long a photo instant dwells before advancing. Clips use their own length. */
   instantDurationMs: 6_000,
   maxRecommendations: 8,
+  /**
+   * Voice capture. `en-IN` matters more than it looks: the same engine set to
+   * en-US mangles neighbourhood names like Indiranagar and Koramangala, which
+   * are exactly the words a user is most likely to say.
+   */
+  speech: {
+    lang: "en-IN",
+    /** Hard ceiling on one utterance, so an open mic can't run forever. */
+    maxUtteranceMs: 15_000,
+    /** iOS ignores this and ends on its own pause; that path is handled. */
+    continuous: false,
+  },
 } as const;
 
 export const STORAGE_KEYS = {

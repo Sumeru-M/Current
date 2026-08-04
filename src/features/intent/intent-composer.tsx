@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useIntentSession } from "@/stores/intent-session";
+import { VoiceButton } from "@/features/voice/voice-capture";
 
 /**
  * IntentComposer
@@ -99,6 +100,22 @@ export function IntentComposer({
           aria-describedby="intent-hint"
           className="h-11 flex-1 resize-none bg-transparent py-2.5 text-[15px] leading-relaxed text-ink outline-none placeholder:text-subtle disabled:opacity-60"
         />
+        {/*
+          Dictating a refinement — "actually make it eight of us" — is the
+          highest-value voice moment in the app: short, conversational, and the
+          alternative is retyping a whole sentence. The transcript lands in the
+          field rather than submitting, because a correction is usually worth
+          a glance before it re-ranks.
+        */}
+        {!value.trim() && !busy ? (
+          <VoiceButton
+            className="mb-0.5"
+            onTranscript={(text) =>
+              setValue((current) => (current ? `${current} ${text}` : text))
+            }
+          />
+        ) : null}
+
         <button
           type="submit"
           disabled={!value.trim() || busy}

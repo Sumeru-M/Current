@@ -1,5 +1,6 @@
 import type { ServiceContainer } from "./contracts";
 import { MockIntentService } from "./mock/intent-engine";
+import { createTranscriptionService } from "./speech";
 import {
   MockAnalyticsService,
   MockAvailabilityService,
@@ -34,6 +35,8 @@ const createMockServices = (): ServiceContainer => ({
   analytics: new MockAnalyticsService(),
   business: new MockBusinessService(),
   bookings: new MockBookingService(),
+  /** Real, not mocked — the browser engine is the production engine for now. */
+  speech: createTranscriptionService(),
 });
 
 let container: ServiceContainer | null = null;

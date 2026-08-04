@@ -1,3 +1,4 @@
+import type { TranscriptionService } from "./speech/contract";
 import type {
   AnalyticsRange,
   AnalyticsSummary,
@@ -95,4 +96,5 @@ export interface ServiceContainer {
   analytics: AnalyticsService;
   business: BusinessService;
   bookings: BookingService;
+  speech: TranscriptionService;
 }

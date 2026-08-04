@@ -95,6 +95,21 @@ They surface where the decision is actually made: when a venue has a live instan
 - Expiry is enforced **on read**, so no sweeper job exists and no expired instant can ever be served.
 - Uploads are real object URLs — they play, they preview in the exact viewer guests use, and they do **not** survive a refresh. The UI says so rather than implying durability we don't have.
 
+### 2c. Voice is the primary input
+
+On a phone outside a venue, saying *"six of us, techno, under ₹3,000 each"* takes about four seconds. Typing it takes twenty, plus both hands and your attention. So the landing screen leads with a microphone and keeps the keyboard one tap away — never buried behind a failure state, because voice fails in exactly the loud rooms this app is used in.
+
+**On Wispr Flow:** it is a dictation *app*, not an embeddable SDK — it types into other apps at the OS level, and its developer page routes integration questions to sales. Two consequences: (1) users who have it can already dictate into our text field with zero work from us, and (2) in-app voice needs a different engine. So `services/speech/contract.ts` is the seam, and the browser's Web Speech API is the implementation behind it. Whisper, Deepgram, or a Wispr dictation API drop in without a component change.
+
+- The contract is **streaming**, not record-then-transcribe. Watching your words appear is what makes a mic feel like it is listening rather than buffering.
+- `lang: "en-IN"` — the same engine on `en-US` mangles *Indiranagar* and *Koramangala*, the words users are most likely to say.
+- **Tap to start, tap to stop**, not press-and-hold: a hold gesture that slips loses the whole utterance, and only a visible Stop works one-handed.
+- It **submits itself**. Making someone speak and then hunt for a send button spends the time voice just saved. Misheard words are fixed through the intent chips — one tap, no re-record.
+- Support detection goes through `useSyncExternalStore` with an optimistic server snapshot. A plain render-time check renders a text field on the server and a mic on the client, which is a hydration error — caught and fixed in testing.
+- A hard 15-second ceiling per utterance, single-fire `onEnd`, and mic release on unmount, so a session can never hang in "listening" or leave the mic open.
+
+Spoken input has no ₹ symbol and no comma grouping — verified that *"under 3000 each"* still parses to a ₹3,000 budget.
+
 ### 3. Service layer as the only seam
 
 The UI depends on `services/contracts.ts`, never an implementation. `services/index.ts` is a container; the real-backend switch is:
