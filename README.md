@@ -1,4 +1,4 @@
-# Aperture — AI intent engine for going out
+# Current — AI intent engine for going out
 
 Two applications, one platform, one service layer.
 
