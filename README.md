@@ -8,9 +8,11 @@ Two applications, one platform, one service layer.
 Everything is backed by mock services behind typed contracts. Swapping in a real backend is a change to one file.
 
 ```bash
-npm run dev      # http://localhost:3000
+npm run dev        # http://localhost:3000
 npm run build
-npx tsc --noEmit && npx eslint src
+npm test           # vitest — pure-function unit + regression suite
+npm run typecheck  # tsc --noEmit
+npm run lint       # eslint
 ```
 
 ---
@@ -157,6 +159,6 @@ WCAG 2.1 AA targeted throughout: skip link, focus-visible on every interactive s
 
 ## Known gaps
 
-- No test suite yet. The ranking engine and intent parser are pure functions with no I/O — they are the first things to cover, and the service container already accepts stubs via `__setServices`.
+- Tests cover the engine — the ranking factors, intent parser, opening hours, and formatting, with an explicit regression test for each of the five bugs listed under "The decisions that matter". Deliberately *not* yet covered: React components, end-to-end flows, real speech recognition (needs a device with a mic), and the mock store. Those are the next round.
 - Reviews, real notifications/push, and multi-city support are modelled in types but not built.
 - Live updates are polled, not pushed. SSE/WebSockets are the right answer at scale; the transport swaps under the existing hooks without touching components.

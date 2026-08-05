@@ -67,11 +67,13 @@ export const formatClock = (value: string): string => {
   });
 };
 
-export const minutesSince = (iso: string): number =>
-  Math.max(0, (Date.now() - new Date(iso).getTime()) / 60_000);
+// `at` defaults to now, so every call site is untouched; tests pass a fixed
+// clock to make these deterministic (the pattern from `lib/hours.ts`).
+export const minutesSince = (iso: string, at: Date = new Date()): number =>
+  Math.max(0, (at.getTime() - new Date(iso).getTime()) / 60_000);
 
-export const formatRelativeTime = (iso: string): string => {
-  const minutes = minutesSince(iso);
+export const formatRelativeTime = (iso: string, at: Date = new Date()): string => {
+  const minutes = minutesSince(iso, at);
   if (minutes < 1) return "just now";
   if (minutes < 60) return `${Math.round(minutes)} min ago`;
   const hours = minutes / 60;
@@ -79,8 +81,8 @@ export const formatRelativeTime = (iso: string): string => {
   return `${Math.round(hours / 24)}d ago`;
 };
 
-export const formatCountdown = (iso: string): string => {
-  const ms = new Date(iso).getTime() - Date.now();
+export const formatCountdown = (iso: string, at: Date = new Date()): string => {
+  const ms = new Date(iso).getTime() - at.getTime();
   if (ms <= 0) return "expired";
   const minutes = Math.round(ms / 60_000);
   if (minutes < 60) return `${minutes}m left`;
@@ -92,8 +94,8 @@ export const formatCountdown = (iso: string): string => {
  * consumer sees "live 4 min ago", the venue sees "you are about to drop out of
  * recommendations". Two definitions would be a support nightmare.
  */
-export const getFreshness = (iso: string): Freshness => {
-  const ageMinutes = minutesSince(iso);
+export const getFreshness = (iso: string, at: Date = new Date()): Freshness => {
+  const ageMinutes = minutesSince(iso, at);
   const { live, recent, stale } = APP.freshnessThresholds;
   if (ageMinutes <= live) return { level: "live", ageMinutes, label: "Live" };
   if (ageMinutes <= recent) {
